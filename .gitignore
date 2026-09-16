@@ -1,0 +1,9 @@
+*.session
+*.session-journal
+*.jsonl
+tg_purge_deleted_*.log
+__pycache__/
+*.pyc
+.env
+credentials.json
+.DS_Store
