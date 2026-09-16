@@ -1,12 +1,22 @@
 # nuke-my-telegram
 
+**Delete all your own messages, photos and videos from a Telegram group — for everyone, without admin rights.**
+
+Telegram lets admins wipe a user's entire history with one tap. It gives you, the member, nothing: you select 100 messages at a time, forever. This is the missing command.
+
+```bash
+git clone https://github.com/currentsundaymorning-hub/nuke-my-telegram
+cd nuke-my-telegram
+python3 -m venv .venv && source .venv/bin/activate && pip install -U "telethon==1.45.*"
+
+python3 tg_purge.py list                        # log in, find the chat id
+python3 tg_purge.py scan  --chat -1001234567890 # count only, deletes nothing
+python3 tg_purge.py purge --chat -1001234567890 # delete, for everyone
+```
+
 ![nuke-my-telegram](assets/social-preview.png)
 
-**Delete every message you ever sent in a Telegram group — text, photos, videos, voice notes, files. For everyone. Without admin rights.**
-
-Telegram lets any member delete their own messages at any time, with no age limit. What it does not give you is a **delete all of mine** button. Admins get "Delete all messages from this user"; you get to select 100 at a time, forever.
-
-This is that missing button. One file, ~350 lines, one dependency, nothing leaves your machine.
+## What a dry run looks like
 
 ```
 $ python3 tg_purge.py scan --chat -1001234567890
@@ -21,17 +31,6 @@ Skipped service messages (members cannot delete those): 6
 
 That was a dry run (scan). Nothing was deleted.
 ```
-
-## Install
-
-```bash
-git clone https://github.com/currentsundaymorning-hub/nuke-my-telegram
-cd nuke-my-telegram
-python3 -m venv .venv && source .venv/bin/activate
-pip install -U "telethon==1.45.*"
-```
-
-A plain `pip install` without a venv also works, unless your Python is an externally managed one — Homebrew and most Linux distros refuse it.
 
 ## Get your API keys
 
@@ -54,7 +53,7 @@ These live only in the current shell. Skip this and the script will just ask.
 
 **Your keys never leave your machine.** They go straight into Telethon and nowhere else — no config is uploaded, no telemetry, no network calls except MTProto to Telegram. Read [tg_purge.py](tg_purge.py) and check; that is why it is one short file.
 
-## Quick start
+## Full run, start to finish
 
 ```bash
 # 1. log in and find the chat id (asks for phone, code and 2FA password the first time)
@@ -77,9 +76,19 @@ Supergroup ids start with `-100`; basic group ids are just negative. Step 1 crea
 
 **Delete before you leave the group.** Once you are out you cannot delete anything (`CHANNEL_PRIVATE`), and out of a private group with no invite link it is permanent.
 
-## Filters
+## Delete only photos and videos, keep the text
 
-Both `scan` and `purge` take:
+```bash
+python3 tg_purge.py purge --chat -1001234567890 --media-only
+```
+
+`--media-only` keeps every text message and removes only photos, videos, GIFs and round video messages. Combine it with a date cut-off and a backup of the text you are about to lose:
+
+```bash
+python3 tg_purge.py purge --chat -1001234567890 --media-only --before 2025-01-01 --backup mine.jsonl
+```
+
+Both `scan` and `purge` take the same filters:
 
 ```
 --media-only            photos, videos, GIFs and round videos only, keep the text
@@ -87,12 +96,6 @@ Both `scan` and `purge` take:
 --after  2024-01-01     only messages newer than this date
 --backup mine.jsonl     save your messages to a file before deleting them
 --yes                   skip the confirmation prompt
-```
-
-Delete just the photos and videos you posted before 2025, keeping a copy of the text:
-
-```bash
-python3 tg_purge.py purge --chat -1001234567890 --media-only --before 2025-01-01 --backup mine.jsonl
 ```
 
 ## How it avoids wrecking your account
@@ -105,9 +108,25 @@ python3 tg_purge.py purge --chat -1001234567890 --media-only --before 2025-01-01
 - **Every deleted id is appended to a log file**, so an interrupted run leaves a record.
 - **One dependency.** Telethon, pinned. Nothing else executes with your session.
 
+## How it compares
+
+Competitor state checked 2026-09-16; these projects move, so verify before relying on the row.
+
+| | nuke-my-telegram | [gurland](https://github.com/gurland/telegram-delete-all-messages) | [tgeraser](https://github.com/en9inerd/tgeraser) | [wipemychat](https://github.com/rusq/wipemychat) |
+|---|---|---|---|---|
+| Dry run with a report | yes | no ([#101](https://github.com/gurland/telegram-delete-all-messages/issues/101)) | no | no |
+| Photos/videos only | yes | no | yes | no |
+| Date range | yes | no ([PR #89](https://github.com/gurland/telegram-delete-all-messages/pull/89)) | yes | no ([#28](https://github.com/rusq/wipemychat/issues/28)) |
+| Backup before deleting | yes, JSONL | no | no | no |
+| Flags pre-supergroup history | yes, prints the old chat id | labels it in the menu | no | no |
+| Install | git clone | git clone | `pip install tgeraser` | prebuilt binary |
+| Implementation | 1 Python file | Python | Python | Go, with a TUI |
+
+They are not strawmen: tgeraser installs from PyPI and can sweep every chat at once, wipemychat ships signed binaries and a terminal UI for people who will not touch Python, and gurland gives you a numbered menu of your groups. This one optimizes for *knowing what will happen before it happens*, and for being short enough to read in full before you hand it your session.
+
 ## Read this before you start
 
-- **Do not leave the group first.** Leaving deletes nothing, and once you are out you cannot delete anything (`CHANNEL_PRIVATE`). Out of a private group with no invite link, it is permanent.
+- **Do not leave the group first.** Leaving deletes nothing, and once you are out you cannot delete anything. Out of a private group with no invite link, it is permanent.
 - **Deleting your Telegram account does not help either.** Per Telegram's own FAQ, your messages stay in the group; you just become "Deleted Account". That is anonymization, not erasure.
 - **In a supergroup, every deletion is copied to the admins' Recent Actions log, with full content, for 48 hours.** Telegram's privacy policy states this outright, and it covers deletions made by ordinary members. Against an admin who looks within two days, a mass purge is a signal, not concealment.
 - **There is no undo.** Telegram has no trash. Use `--backup` if you might want the text later.
@@ -127,17 +146,41 @@ If the content is sensitive and the group is old, assume copies exist. Deletion 
 
 ## FAQ
 
-**Do I need to be an admin?** No. That is the whole point. Admin rights are only needed to delete *other people's* messages.
+### How do I delete all my messages in a Telegram group without being an admin?
 
-**Is there a time limit?** No. A message from 2016 deletes exactly like one from a minute ago. The 48-hour limit people remember is a **Bot API** restriction and does not apply to a user account.
+That is exactly what this does. Admin rights are only needed to delete *other people's* messages. Any member can delete their own, and Telegram simply never built a button for doing it in bulk.
 
-**Could a bot do this instead?** No. Bots are capped at 48 hours and cannot read chat history they did not receive live.
+### Can I delete Telegram messages older than 48 hours?
 
-**Will I get banned?** Deleting your own content is not abuse. You will hit `FLOOD_WAIT` throttling on large purges — the script sleeps it out. Do not run two deletion tools on one account at the same time.
+Yes. A message from 2016 deletes exactly like one from a minute ago — there is no age limit on deleting your own messages. The 48-hour figure that page-one search results keep repeating is a **Bot API** restriction: it applies to bots, not to your own account.
 
-**Basic group or supergroup?** The script detects it and adapts. In a supergroup every deletion is automatically for everyone; in a basic group `revoke=True` is passed explicitly, which is the checkbox people forget to tick in the official clients.
+### Does it delete for everyone, or only for me?
 
-**Topics / forum groups?** A topic is a thread inside the same supergroup, so they are handled like any other message.
+For everyone. In a supergroup it cannot be otherwise — `channels.deleteMessages` has no "only for me" flag at the protocol level. In a legacy basic group the flag exists and is the checkbox people forget to tick; this script always passes `revoke=True`, and there is no option to turn that off.
+
+### Will it touch other people's messages?
+
+No. Every message is checked against your own user id before it enters the delete queue, and deleting someone else's message as a non-admin is refused by Telegram anyway (`CHAT_ADMIN_REQUIRED`).
+
+### Does deleting my Telegram account remove my messages from groups?
+
+No. Per [Telegram's FAQ](https://telegram.org/faq#q-can-i-delete-my-account), the account goes, the group history stays, and your old messages are re-attributed to "Deleted Account". Purge first, then delete the account if you still want to.
+
+### Can I delete only the photos and videos I posted?
+
+Yes — `--media-only`. Combine it with `--before` to drop old media while keeping recent conversation.
+
+### Could a bot do this instead?
+
+No. Bots are capped at 48 hours and cannot read chat history they did not receive live. Only an MTProto user session can enumerate years of your own messages.
+
+### Will I get banned for running this?
+
+Deleting your own content is not abuse. You will hit `FLOOD_WAIT` throttling on large purges — the script sleeps it out and continues. Do not run two deletion tools on one account at the same time.
+
+### Does it work in topics / forum groups?
+
+Yes. A topic is a thread inside the same supergroup, so its messages are handled like any other.
 
 ## Security
 
