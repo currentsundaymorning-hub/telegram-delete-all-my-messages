@@ -27,8 +27,10 @@ That was a dry run (scan). Nothing was deleted.
 ```bash
 git clone https://github.com/currentsundaymorning-hub/nuke-my-telegram
 cd nuke-my-telegram
-python3 -m pip install -U "telethon==1.45.*"
+python3 -m venv .venv && .venv/bin/pip install -U "telethon==1.45.*"
 ```
+
+Use the venv's interpreter (`.venv/bin/python`) in the commands below. A plain `pip install` also works if your Python is not an externally managed one — Homebrew and most Linux distros will refuse it.
 
 Get `api_id` and `api_hash` at [my.telegram.org](https://my.telegram.org) → **API development tools**. The login code arrives **inside Telegram**, not by SMS.
 

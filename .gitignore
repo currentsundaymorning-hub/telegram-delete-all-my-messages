@@ -2,6 +2,8 @@
 *.session-journal
 *.jsonl
 tg_purge_deleted_*.log
+.venv/
+venv/
 __pycache__/
 *.pyc
 .env
