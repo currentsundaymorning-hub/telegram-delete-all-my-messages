@@ -27,38 +27,69 @@ That was a dry run (scan). Nothing was deleted.
 ```bash
 git clone https://github.com/currentsundaymorning-hub/nuke-my-telegram
 cd nuke-my-telegram
-python3 -m venv .venv && .venv/bin/pip install -U "telethon==1.45.*"
+python3 -m venv .venv && source .venv/bin/activate
+pip install -U "telethon==1.45.*"
 ```
 
-Use the venv's interpreter (`.venv/bin/python`) in the commands below. A plain `pip install` also works if your Python is not an externally managed one — Homebrew and most Linux distros will refuse it.
+A plain `pip install` without a venv also works, unless your Python is an externally managed one — Homebrew and most Linux distros refuse it.
 
-Get `api_id` and `api_hash` at [my.telegram.org](https://my.telegram.org) → **API development tools**. The login code arrives **inside Telegram**, not by SMS.
+## Get your API keys
+
+The script talks to Telegram as **you**, so it needs your own API credentials. They are free and take a minute.
+
+1. Open [my.telegram.org](https://my.telegram.org) in a normal browser — no VPN, no ad blocker, cookies on.
+2. Enter your phone number in international format. **The login code arrives as a message inside Telegram, not by SMS.** If you have a cloud password (2FA), it asks for that next.
+3. Click **API development tools**.
+4. Fill in **App title** and **Short name** (5–32 latin characters). Leave the URL empty, set **Platform** to *Other*, then **Create application**.
+5. Copy **App api_id** (a number) and **App api_hash** (32 hex characters).
+
+One application per phone number, and there is no delete button — that is normal and fine.
 
 ```bash
 export TG_API_ID=1234567
 export TG_API_HASH=0123456789abcdef0123456789abcdef
 ```
 
-## Use
+These live only in the current shell. Skip this and the script will just ask.
+
+**Your keys never leave your machine.** They go straight into Telethon and nowhere else — no config is uploaded, no telemetry, no network calls except MTProto to Telegram. Read [tg_purge.py](tg_purge.py) and check; that is why it is one short file.
+
+## Quick start
 
 ```bash
-python3 tg_purge.py list                        # find the chat id
-python3 tg_purge.py scan  --chat -1001234567890 # count only, deletes nothing
-python3 tg_purge.py purge --chat -1001234567890 # delete, asks you to type the count
-python3 tg_purge.py logout                      # log out, remove the session file
+# 1. log in and find the chat id (asks for phone, code and 2FA password the first time)
+python3 tg_purge.py list
+
+# 2. count what would go — deletes nothing
+python3 tg_purge.py scan --chat -1001234567890
+
+# 3. delete it — you confirm by typing the exact number of messages
+python3 tg_purge.py purge --chat -1001234567890
+
+# 4. verify: this should now report 0
+python3 tg_purge.py scan --chat -1001234567890
+
+# 5. clean up
+python3 tg_purge.py logout
 ```
 
-Filters work on both `scan` and `purge`:
+Supergroup ids start with `-100`; basic group ids are just negative. Step 1 creates `tg_purge.session` in the current directory — that file is a logged-in session, so keep it to yourself and run `logout` when you are done.
 
-```bash
---media-only            # photos, videos, GIFs and round videos only, keep the text
---before 2025-01-01     # only messages older than this date
---after  2024-01-01     # only messages newer than this date
---backup mine.jsonl     # save your messages to a file before deleting them
---yes                   # skip the confirmation prompt
+**Delete before you leave the group.** Once you are out you cannot delete anything (`CHANNEL_PRIVATE`), and out of a private group with no invite link it is permanent.
+
+## Filters
+
+Both `scan` and `purge` take:
+
+```
+--media-only            photos, videos, GIFs and round videos only, keep the text
+--before 2025-01-01     only messages older than this date
+--after  2024-01-01     only messages newer than this date
+--backup mine.jsonl     save your messages to a file before deleting them
+--yes                   skip the confirmation prompt
 ```
 
-Delete just the photos and videos you posted before 2025, keeping a copy:
+Delete just the photos and videos you posted before 2025, keeping a copy of the text:
 
 ```bash
 python3 tg_purge.py purge --chat -1001234567890 --media-only --before 2025-01-01 --backup mine.jsonl
