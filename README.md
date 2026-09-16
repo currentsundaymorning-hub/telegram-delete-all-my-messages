@@ -1,5 +1,7 @@
 # nuke-my-telegram
 
+![nuke-my-telegram](assets/social-preview.png)
+
 **Delete every message you ever sent in a Telegram group — text, photos, videos, voice notes, files. For everyone. Without admin rights.**
 
 Telegram lets any member delete their own messages at any time, with no age limit. What it does not give you is a **delete all of mine** button. Admins get "Delete all messages from this user"; you get to select 100 at a time, forever.
