@@ -5,8 +5,8 @@
 Telegram lets admins wipe a user's entire history with one tap. It gives you, the member, nothing: you select 100 messages at a time, forever. This is the missing command.
 
 ```bash
-git clone https://github.com/currentsundaymorning-hub/nuke-my-telegram
-cd nuke-my-telegram
+git clone https://github.com/currentsundaymorning-hub/telegram-delete-all-my-messages
+cd telegram-delete-all-my-messages
 python3 -m venv .venv && source .venv/bin/activate && pip install -U "telethon==1.45.*"
 
 python3 tg_purge.py list                        # log in, find the chat id
@@ -195,7 +195,7 @@ Read the script before you run it. It is one file and it is short — that is de
 
 ## Author
 
-[@syn0psi](https://t.me/syn0psi) on Telegram — fitting, given the subject. Bug reports and feature requests are better off as [issues](https://github.com/currentsundaymorning-hub/nuke-my-telegram/issues); Telegram is for everything else.
+[@syn0psi](https://t.me/syn0psi) on Telegram — fitting, given the subject. Bug reports and feature requests are better off as [issues](https://github.com/currentsundaymorning-hub/telegram-delete-all-my-messages/issues); Telegram is for everything else.
 
 ## License
 
